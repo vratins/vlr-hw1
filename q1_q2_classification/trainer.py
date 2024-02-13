@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import torch
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
+import wandb
 import utils
 from voc_dataset import VOCDataset
 
@@ -23,7 +23,8 @@ def save_model(epoch, model_name, model):
 
 
 def train(args, model, optimizer, scheduler=None, model_name='model'):
-    writer = SummaryWriter()
+    # writer = SummaryWriter()
+    wandb.init(project="hw1_q1", name=model_name)
     train_loader = utils.get_data_loader(
         'voc', train=True, batch_size=args.batch_size, split='trainval', inp_size=args.inp_size)
     test_loader = utils.get_data_loader(
@@ -73,13 +74,13 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
             loss.backward()
             
             if cnt % args.log_every == 0:
-                writer.add_scalar("Loss/train", loss.item(), cnt)
+                wandb.log({"Loss/train": loss.item()}, step=cnt)
                 print('Train Epoch: {} [{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, cnt, 100. * batch_idx / len(train_loader), loss.item()))
                 
                 # Log gradients
                 for tag, value in model.named_parameters():
                     if value.grad is not None:
-                        writer.add_histogram(tag + "/grad", value.grad.cpu().numpy(), cnt)
+                        wandb.log({f"{tag}/grad": wandb.Histogram(value.grad.cpu().numpy())}, step=cnt)
 
             optimizer.step()
             
@@ -88,19 +89,20 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
                 model.eval()
                 ap, map = utils.eval_dataset_map(model, args.device, test_loader)
                 print("map: ", map)
-                writer.add_scalar("map", map, cnt)
+                wandb.log({"map": map}, step=cnt)
                 model.train()
             
             cnt += 1
 
         if scheduler is not None:
             scheduler.step()
-            writer.add_scalar("learning_rate", scheduler.get_last_lr()[0], cnt)
+            wandb.log({"learning_rate": scheduler.get_last_lr()[0]}, step=cnt)
 
         # save model
         if save_this_epoch(args, epoch):
             save_model(epoch, model_name, model)
-
+    
+    wandb.finish()
     # Validation iteration
     test_loader = utils.get_data_loader('voc', train=False, batch_size=args.test_batch_size, split='test', inp_size=args.inp_size)
     ap, map = utils.eval_dataset_map(model, args.device, test_loader)
