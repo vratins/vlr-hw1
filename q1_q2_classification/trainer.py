@@ -53,7 +53,19 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
             # Function Outputs:
             #   - `output`: Computed loss, a single floating point number
             ##################################################################
-            loss = 0
+
+            def BinaryCrossEntropyLoss(output, target):
+            #Binary cross-entropy loss calculated for multi-label classifiction
+            #input: predictions from network, ground truth labels
+            #output: loss, single number
+                
+                output_probability = torch.sigmoid(output)
+                #account for underflow
+                bce_loss = -wgt * (target * torch.log(output_probability + 1e-10) + (1 - target) * torch.log(1 - output_probability + 1e-10)) 
+
+                return bce_loss.sum(dim=1).mean() #aggregate loss across all labels first
+                
+            loss = BinaryCrossEntropyLoss(output, target)
             ##################################################################
             #                          END OF YOUR CODE                      #
             ##################################################################

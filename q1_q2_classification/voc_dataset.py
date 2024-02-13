@@ -104,10 +104,12 @@ class VOCDataset(Dataset):
         # in line 46 in simple_cnn.py
         ######################################################################
 
-        
-        
-
-
+        if self.split == 'test':
+            return [transforms.CenterCrop(self.size)]
+        else:
+            return [transforms.RandomResizedCrop(self.size),
+                    transforms.RandomHorizontalFlip(p=0.4),
+                    transforms.RandomRotation((-15,15))]
 
         pass
         ######################################################################

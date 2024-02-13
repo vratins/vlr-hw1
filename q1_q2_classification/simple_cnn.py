@@ -37,8 +37,14 @@ class SimpleCNN(nn.Module):
         self.pool1 = nn.AvgPool2d(2, 2)
         self.pool2 = nn.AvgPool2d(2, 2)
 
+        #calculate size of feature maps afer each layer:
+        after_conv1 = (inp_size - 5 + 4)//1 + 1 
+        after_pool1 = after_conv1 // 2
+        after_conv2 = (after_pool1 - 5 + 4) // 1 + 1 
+        after_pool2 = after_conv2 // 2
+
         # TODO set the correct dim here
-        self.flat_dim = None
+        self.flat_dim = 64 * (after_pool2 **2)
 
         # Sequential is another way of chaining the layers.
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'none'))
