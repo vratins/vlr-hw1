@@ -78,7 +78,7 @@ def get_data_loader(name='voc', train=True, batch_size=64, split='train', inp_si
         dataset,
         batch_size=batch_size,
         shuffle=train,
-        num_workers=4,
+        num_workers=2,
     )
     return loader
 
